@@ -28,17 +28,17 @@ MessageHandler::messageIs(const string& msg)
 }
 
 
-void
+string
 MessageHandler::call(PythonObject::Ptr handlerFunc, const string& msg)
 {
   PythonScopedGIL lock;
 
   PythonObject::Ptr obj = json_->loads(msg);
-
   PythonTuple::Ptr args = PythonTuple::pythonTupleNew(1);
   args->itemIs(0, obj);
 
-  (*handlerFunc)(args);
+  PythonObject::Ptr ret = (*handlerFunc)(args);
+  return json_->dumps(ret);
 }
 
 

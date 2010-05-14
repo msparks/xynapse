@@ -40,7 +40,7 @@ protected:
 
   void workerThreadFunc(unsigned int workerIndex);
 
-  void call(PythonObject::Ptr handlerFunc, const string& msg);
+  string call(PythonObject::Ptr handlerFunc, const string& msg);
 
   struct _pyHandler {
     string protocol;
