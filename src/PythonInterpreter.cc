@@ -8,6 +8,8 @@ PythonObject::operator()(PythonTuple::Ptr& args)
     return NULL;
   PythonScopedGIL l;
   PyObject *ret = PyObject_CallObject(object_, args->ptr());
+  if (ret == NULL)
+    throw PythonException();
   return PythonObject::pythonObjectNew(ret);
 }
 
@@ -19,6 +21,8 @@ PythonObject::operator()()
     return NULL;
   PythonScopedGIL l;
   PyObject *ret = PyObject_CallObject(object_, NULL);
+  if (ret == NULL)
+    throw PythonException();
   return PythonObject::pythonObjectNew(ret);
 }
 
