@@ -14,6 +14,10 @@ MessageHandler::handlerIs(const string& protocol, const string& eventName,
 {
   struct _pyHandler h = {protocol, eventName, handlerFunc};
   pyHandlers_.push_back(h);
+
+  std::stringstream ss;
+  ss << "handler registered: " << "(" << protocol << ", " << eventName + ")";
+  log_->entryNew(log_->debug(), ss.str());
 }
 
 
@@ -55,7 +59,7 @@ MessageHandler::workerThreadFunc(unsigned int workerIndex)
     try {
       boost::property_tree::json_parser::read_json(ss, pt);
     } catch (boost::property_tree::json_parser::json_parser_error& e) {
-      //cout << "failed to parse message, ignoring." << endl;
+      log_->entryNew(log_->debug(), "unable to parse incoming message");
       return;
     }
 
@@ -78,6 +82,8 @@ MessageHandler::MessageHandler(PythonInterpreter::Ptr py)
   : py_(py),
     messageQueue_(Fwk::ConcurrentDeque<string>::concurrentDequeNew())
 {
+  log_ = Fwk::Log::logNew("MessageHandler");
+
   py->moduleIs("json");
   py->moduleIs("xynapse");
 
@@ -96,6 +102,10 @@ MessageHandler::MessageHandler(PythonInterpreter::Ptr py)
                                            this, i);
     workers_.add_thread(thr);
   }
+
+  std::stringstream ss;
+  ss << "initialized with " << kWorkers << " worker threads";
+  log_->entryNew(log_->info(), ss.str());
 }
 
 

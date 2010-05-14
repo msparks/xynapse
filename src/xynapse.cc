@@ -38,7 +38,9 @@ public:
   }
 
 protected:
-  TcpReactor(TcpInterface::Ptr notifier) : TcpInterface::Notifiee(notifier) { }
+  TcpReactor(TcpInterface::Ptr notifier)
+    : TcpInterface::Notifiee(notifier), log_(Fwk::Log::logNew("TcpReactor")) { }
+  Fwk::Log::Ptr log_;
 };
 
 
@@ -110,7 +112,7 @@ main(int argc, char **argv)
   signal(SIGINT, signalHandler);
 
   Fwk::Log::Ptr log = Fwk::Log::logNew();
-  log->levelIs(log->info());
+  log->levelIs(log->debug());
 
   po::variables_map options = parseOptions(argc, argv);
   string configFileName;

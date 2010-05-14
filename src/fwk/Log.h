@@ -6,6 +6,7 @@
 #define __FWK__LOG_H_
 
 #include <string>
+#include <sstream>
 #include <iostream>
 #include <ctime>
 
@@ -86,6 +87,10 @@ public:
   virtual void entryNew(Fwk::NamedInterface *entity,
                         string funcName, string cond) {
     entryNew(info_, entity, funcName, cond);
+  }
+
+  virtual void entryNew(Level level, string funcName, string cond) {
+    entryNew(level, NULL, funcName, cond);
   }
 
   virtual void entryNew(string funcName, string cond) {

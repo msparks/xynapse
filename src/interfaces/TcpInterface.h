@@ -6,6 +6,7 @@
 #include <boost/thread.hpp>
 #include <boost/thread/mutex.hpp>
 #include "fwk/Exception.h"
+#include "fwk/Log.h"
 #include "fwk/Nominal.h"
 #include "fwk/Notifiee.h"
 #include "fwk/Ptr.h"
@@ -97,7 +98,8 @@ protected:
 
   TcpInterface()
     : notifiee_(NULL), port_(kDefaultTcpPort), isolation_(closed_),
-      running_(false), sock_(0), clientCount_(0) { }
+      running_(false), sock_(0), clientCount_(0),
+      log_(Fwk::Log::logNew("TcpInterface")) { }
   ~TcpInterface() { stop(); }
 
   Notifiee *notifiee_;
@@ -108,6 +110,7 @@ protected:
   boost::thread_group threadGroup_;
   boost::mutex clientCountMutex_;
   unsigned int clientCount_;
+  Fwk::Log::Ptr log_;
 };
 
 #endif

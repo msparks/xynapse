@@ -5,6 +5,7 @@
 
 #include <string>
 #include <vector>
+#include "fwk/Log.h"
 #include "fwk/Ptr.h"
 #include "fwk/PtrInterface.h"
 #include "fwk/ConcurrentDeque.h"
@@ -51,6 +52,7 @@ protected:
   Fwk::ConcurrentDeque<string>::Ptr messageQueue_;
   boost::thread_group workers_;
   bool running_;
+  Fwk::Log::Ptr log_;
 };
 
 #endif

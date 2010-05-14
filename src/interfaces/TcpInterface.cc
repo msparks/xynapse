@@ -50,13 +50,14 @@ TcpInterface::acceptThreadFunc()
   struct sockaddr_in addr;
   socklen_t addrLen;
 
-  cout << "Accept thread starting" << endl;
+  log_->entryNew(log_->info(), "waiting for connections");
 
   while (running_) {
     addrLen = sizeof(addr);
     client = accept(sock_, (struct sockaddr *)&addr, &addrLen);
     if (retval == -1) {
-      cout << strerror(errno) << endl;
+      log_->entryNew(log_->critical(), "accept", strerror(errno));
+      break;
     }
 
     boost::lock_guard<boost::mutex> lock(clientCountMutex_);
@@ -74,7 +75,7 @@ TcpInterface::acceptThreadFunc()
     threadGroup_.add_thread(thr);
   }
 
-  cout << "Accept thread exiting" << endl;
+  log_->entryNew(log_->info(), "shutting down");
 }
 
 
