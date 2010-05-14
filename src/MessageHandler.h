@@ -10,6 +10,7 @@
 #include "fwk/PtrInterface.h"
 #include "fwk/ConcurrentDeque.h"
 #include "interfaces/TcpInterface.h"
+#include "Json.h"
 
 
 using std::string;
@@ -53,6 +54,7 @@ protected:
   boost::thread_group workers_;
   bool running_;
   Fwk::Log::Ptr log_;
+  Json::Ptr json_;
 };
 
 #endif

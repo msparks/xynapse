@@ -33,13 +33,7 @@ MessageHandler::call(PythonObject::Ptr handlerFunc, const string& msg)
 {
   PythonScopedGIL lock;
 
-  PythonObject::Ptr loads = py_->module("json")->attribute("loads");
-  PythonString::Ptr str = PythonString::pythonStringNew(msg);
-
-  PythonTuple::Ptr loadsArgs = PythonTuple::pythonTupleNew(1);
-  loadsArgs->itemIs(0, str);
-
-  PythonObject::Ptr obj = (*loads)(loadsArgs);
+  PythonObject::Ptr obj = json_->loads(msg);
 
   PythonTuple::Ptr args = PythonTuple::pythonTupleNew(1);
   args->itemIs(0, obj);
@@ -80,7 +74,8 @@ MessageHandler::workerThreadFunc(unsigned int workerIndex)
 
 MessageHandler::MessageHandler(PythonInterpreter::Ptr py)
   : py_(py),
-    messageQueue_(Fwk::ConcurrentDeque<string>::concurrentDequeNew())
+    messageQueue_(Fwk::ConcurrentDeque<string>::concurrentDequeNew()),
+    json_(Json::jsonNew(py))
 {
   log_ = Fwk::Log::logNew("MessageHandler");
 

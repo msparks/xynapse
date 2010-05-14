@@ -11,7 +11,8 @@ AM_LIBS     = $(PYTHON_EXTRA_LIBS)
 
 
 noinst_LIBRARIES = libxynapse.a
-libxynapse_a_SOURCES = src/PythonInterpreter.cc src/MessageHandler.cc
+libxynapse_a_SOURCES = src/PythonInterpreter.cc src/MessageHandler.cc \
+  src/Json.cc
 libxynapse_a_CPPFLAGS = -fPIC $(AM_CPPFLAGS)
 
 bin_PROGRAMS = xynapse
