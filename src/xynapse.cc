@@ -134,9 +134,10 @@ main(int argc, char **argv)
                 pt.get_child("modules")) {
     try {
       py->moduleIs(v.second.data());
-      log->entryNew("loaded module: " + v.second.data());
-    } catch (Fwk::ResourceException& e) {
-      log->entryNew(log->warning(), e);
+      log->entryNew("loaded module " + v.second.data());
+    } catch (Fwk::Exception& e) {
+      log->entryNew(log->warning(), "failed to load module " + v.second.data());
+      log->entryNew(log->debug(), e);
     }
   }
 

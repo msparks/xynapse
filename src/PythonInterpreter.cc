@@ -2,7 +2,8 @@
 
 
 PythonObject::Ptr
-PythonObject::operator()(PythonTuple::Ptr& args) {
+PythonObject::operator()(PythonTuple::Ptr& args)
+{
   if (!callable())
     return NULL;
   PythonScopedGIL l;
@@ -12,12 +13,50 @@ PythonObject::operator()(PythonTuple::Ptr& args) {
 
 
 PythonObject::Ptr
-PythonObject::operator()() {
+PythonObject::operator()()
+{
   if (!callable())
     return NULL;
   PythonScopedGIL l;
   PyObject *ret = PyObject_CallObject(object_, NULL);
   return PythonObject::pythonObjectNew(ret);
+}
+
+
+PythonException::PythonException()
+  : Exception(NULL, "", "")
+{
+  PythonScopedGIL l;
+  PyObject *ptype;
+  PyObject *pvalue;
+  PyObject *ptraceback;
+
+  PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+  PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+
+  PythonObject::Ptr valueObj = PythonObject::pythonObjectNew(pvalue);
+  Py_XDECREF(ptype);
+  Py_XDECREF(ptraceback);
+
+  if (valueObj->ptr() == NULL) {
+    message_ = "No Python exception";
+    return;
+  }
+
+  PythonObject::Ptr nameObj = (*(*valueObj)["__class__"])["__name__"];
+  PythonString::Ptr nameStr = PythonString::pythonStringNew(nameObj->ptr());
+  Py_XINCREF(nameObj->ptr());
+
+  PyObject *ret = PyObject_CallMethod(pvalue, (char *)"__str__", NULL);
+  PythonString::Ptr valueStr = PythonString::pythonStringNew(ret);
+
+  string name = string(*nameStr);
+  string value = string(*valueStr);
+
+  if (value.size() > 0)
+    message_ = name + " Exception: " + value;
+  else
+    message_ = name + " Exception";
 }
 
 
@@ -28,18 +67,6 @@ PythonInterpreter::moduleIs(const string& moduleName)
     return;
 
   PythonModule::Ptr module = PythonModule::pythonModuleNew(moduleName);
-  if (module->ptr() == NULL) {
-    PythonScopedGIL l;
-    if (PyErr_Occurred() != NULL) {
-      cout << "an error occurred" << endl;
-      PyErr_Print();
-    } else {
-      cout << "module failed to import,  but no exception?" << endl;
-    }
-    throw Fwk::ResourceException(this, "moduleIs",
-                                 "failed to load module " + moduleName);
-  }
-
   modules_[moduleName] = module;
 }
 

@@ -25,7 +25,6 @@ protected:
 
 class PythonTuple;
 
-
 class PythonObject : public Fwk::PtrInterface<PythonObject> {
 public:
   typedef Fwk::Ptr<PythonObject> Ptr;
@@ -52,7 +51,7 @@ public:
     return Fwk::PtrInterface<PythonObject>::deleteRef();
   }
 
-  PythonObject::Ptr attribute(string attrName) {
+  PythonObject::Ptr attribute(const string& attrName) {
     PythonScopedGIL l;
     PyObject *attr = PyObject_GetAttrString(object_, attrName.c_str());
     return PythonObject::pythonObjectNew(attr);
@@ -66,10 +65,18 @@ public:
   Ptr operator()(Fwk::Ptr<PythonTuple>& args);
   Ptr operator()();
 
+  Ptr operator[](const string& attrName) { return attribute(attrName); }
+
 protected:
   PythonObject(PyObject *object) : object_(object) { }
 
   PyObject *object_;
+};
+
+
+class PythonException : public Fwk::Exception {
+public:
+  PythonException();
 };
 
 
@@ -81,9 +88,11 @@ public:
   static PythonModule::Ptr pythonModuleNew(const string& moduleName) {
     PythonScopedGIL l;
     PyObject *object = PyImport_ImportModule(moduleName.c_str());
-    if (object == NULL && PyErr_Occurred() != NULL)
-      PyErr_Print();
-    return new PythonModule(object);
+    if (object == NULL)
+      throw PythonException();
+    Ptr m = new PythonModule(object);
+    Py_XDECREF(m->ptr());
+    return m;
   }
 
 protected:
@@ -99,7 +108,11 @@ public:
   static PythonInt::Ptr pythonIntNew(long val) {
     PythonScopedGIL l;
     PyObject *object = PyInt_FromLong(val);
-    return new PythonInt(object);
+    if (object == NULL)
+      throw PythonException();
+    Ptr i = new PythonInt(object);
+    Py_XDECREF(i->ptr());
+    return i;
   }
 
 protected:
@@ -114,9 +127,26 @@ public:
 
   static Ptr pythonStringNew(const string& str) {
     PythonScopedGIL l;
-    PythonString::Ptr s = new PythonString(PyString_FromString(str.c_str()));
+    PyObject *object = PyString_FromString(str.c_str());
+    if (object == NULL)
+      throw PythonException();
+    Ptr s = new PythonString(object);
     Py_XDECREF(s->ptr());
     return s;
+  }
+
+  static Ptr pythonStringNew(PyObject *object) {
+    PythonScopedGIL l;
+    if (object == NULL || !PyString_Check(object))
+      return pythonStringNew("");
+    Ptr s = new PythonString(object);
+    Py_XDECREF(s->ptr());
+    return s;
+  }
+
+  operator string() const {
+    PythonScopedGIL l;
+    return string(PyString_AsString(object_));
   }
 
 protected:
@@ -131,7 +161,10 @@ public:
 
   static Ptr pythonTupleNew(ssize_t len) {
     PythonScopedGIL l;
-    Ptr t = new PythonTuple(PyTuple_New(len));
+    PyObject *object = PyTuple_New(len);
+    if (object == NULL)
+      throw PythonException();
+    Ptr t = new PythonTuple(object);
     Py_XDECREF(t->ptr());
     return t;
   }
