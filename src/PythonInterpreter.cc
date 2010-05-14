@@ -21,6 +21,29 @@ PythonObject::operator()() {
 }
 
 
+void
+PythonInterpreter::moduleIs(const string& moduleName)
+{
+  if (modules_.count(moduleName) > 0)
+    return;
+
+  PythonModule::Ptr module = PythonModule::pythonModuleNew(moduleName);
+  if (module->ptr() == NULL) {
+    PythonScopedGIL l;
+    if (PyErr_Occurred() != NULL) {
+      cout << "an error occurred" << endl;
+      PyErr_Print();
+    } else {
+      cout << "module failed to import,  but no exception?" << endl;
+    }
+    throw Fwk::ResourceException(this, "moduleIs",
+                                 "failed to load module " + moduleName);
+  }
+
+  modules_[moduleName] = module;
+}
+
+
 PythonInterpreter::PythonInterpreter(const string& progName)
   : Fwk::NamedInterface("PythonInterpreter")
 {
