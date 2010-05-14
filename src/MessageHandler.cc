@@ -79,7 +79,6 @@ MessageHandler::MessageHandler(PythonInterpreter::Ptr py)
     messageQueue_(Fwk::ConcurrentDeque<string>::concurrentDequeNew())
 {
   py->moduleIs("json");
-  py->moduleIs("modules.blank");
   py->moduleIs("xynapse");
 
   /* register MessageHandler object in binding module */
