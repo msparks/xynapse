@@ -17,7 +17,12 @@ Json::loads(const string& msg) const
 const string
 Json::dumps(PythonObject::Ptr o) const
 {
-  return "";
+  PythonObject::Ptr dumps = py_->module("json")->attribute("dumps");
+
+  PythonTuple::Ptr dumpsArgs = PythonTuple::pythonTupleNew(1);
+  dumpsArgs->itemIs(0, o);
+
+  return *(PythonString::pythonStringNew((*dumps)(dumpsArgs)));
 }
 
 
