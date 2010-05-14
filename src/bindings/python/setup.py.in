@@ -1,0 +1,18 @@
+from distutils.core import setup, Extension
+
+
+_xynapse = Extension('xynapse',
+                     include_dirs=['../../'],
+                     library_dirs=['../../../'],
+                     libraries=['xynapse'],
+                     sources=['xynapse.cc'])
+
+setup(name='@PACKAGE_NAME@',
+      version='@PACKAGE_VERSION@',
+      description='xynapse python binding',
+      author='Matt Sparks',
+      author_email='@PACKAGE_BUGREPORT@',
+      maintainer='Matt Sparks',
+      maintainer_email='@PACKAGE_BUGREPORT@',
+      url='',
+      ext_modules=[_xynapse])
