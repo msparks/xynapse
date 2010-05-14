@@ -144,6 +144,12 @@ public:
     return s;
   }
 
+  static Ptr pythonStringNew(PythonObject::Ptr o) {
+    if (o->ptr() == NULL | !PyString_Check(o->ptr()))
+      return pythonStringNew("");
+    return new PythonString(o->ptr());
+  }
+
   operator string() const {
     PythonScopedGIL l;
     return string(PyString_AsString(object_));
