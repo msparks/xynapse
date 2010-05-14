@@ -1,5 +1,5 @@
 /** \file Log.h
- * Logging classes.
+ * Logging class.
  * \author Matt Sparks
  */
 #ifndef __FWK__LOG_H_
@@ -16,6 +16,18 @@
 
 namespace Fwk {
 
+/* Log is a singleton */
+class Log;
+static Fwk::Ptr<Log> rootLog = NULL;
+
+static const char *levelNames[] = {
+  "debug",
+  "info",
+  "warning",
+  "error",
+  "critical"
+};
+
 class Log : public Fwk::PtrInterface<Log> {
 public:
   typedef Fwk::Ptr<Log const> PtrConst;
@@ -29,7 +41,14 @@ public:
     critical_
   };
 
-  static Log::Ptr logNew() { return new Log(); }
+  static Log::Ptr logNew(const string& loggerName="root") {
+    if (rootLog.ptr() == NULL)
+      rootLog = new Log("root");
+    if (loggerName == "root")
+      return rootLog;
+
+    return new Log(loggerName);
+  }
 
   Level debug() { return debug_; }
   Level info() { return info_; }
@@ -37,29 +56,32 @@ public:
   Level error() { return error_; }
   Level critical() { return critical_; }
 
-  string levelName(Level level) {
-    switch (level) {
-    case debug_:
-      return "debug";
-      break;
-    case info_:
-      return "info";
-      break;
-    case warning_:
-      return "warning";
-      break;
-    case error_:
-      return "error";
-      break;
-    case critical_:
-    default:
-      return "critical";
-      break;
-    }
+  string levelName(Level level) { return levelNames[level]; }
+
+  inline Level level() const { return logLevel_; }
+  void levelIs(Level level) {
+    if (name() == "root")
+      logLevel_ = level;
+    else
+      rootLog->levelIs(level);
   }
 
+  inline string name() const { return loggerName_; }
+  void nameIs(const string& name) { loggerName_ = name; }
+
   virtual void entryNew(Level level, Fwk::NamedInterface *entity,
-                        string funcName, string cond) { }
+                        string funcName, string cond) {
+    if (level < rootLog->level())
+      return;
+
+    std::cout << timestamp()
+              << " [" << levelName(level) << "] " << name() << ": ";
+    if (entity != NULL && funcName.size() > 0)
+      std::cout << entity->name() << "::" << funcName << ": ";
+    else if (funcName.size() > 0)
+      std::cout << funcName << ": ";
+    std::cout << cond << std::endl;
+  }
 
   virtual void entryNew(Fwk::NamedInterface *entity,
                         string funcName, string cond) {
@@ -87,27 +109,9 @@ public:
   }
 
 protected:
-  virtual ~Log() {}
-  Log() {}
-};
-
-class StdLog : public Log {
-public:
-  static Log::Ptr logNew() { return new StdLog(); }
-
-  virtual void entryNew(Level level, Fwk::NamedInterface *entity,
-                        string funcName, string cond) {
-    std::cout << timestamp() << " [" << levelName(level) << "] ";
-    if (entity != NULL && funcName.size() > 0)
-      std::cout << entity->name() << "::" << funcName << ": ";
-    else if (funcName.size() > 0)
-      std::cout << funcName << ": ";
-    std::cout << cond << std::endl;
-  }
-
-protected:
-  virtual ~StdLog() { }
-  StdLog() { }
+  virtual ~Log() { }
+  Log(const string& loggerName)
+    : loggerName_(loggerName), logLevel_(info_) { }
 
   string timestamp() {
     char buf[50];
@@ -120,6 +124,9 @@ protected:
     strftime(buf, sizeof(buf), "%Y-%m-%d %H:%M:%S", &timeinfo);
     return string(buf);
   }
+
+  string loggerName_;
+  Level logLevel_;
 };
 
 }

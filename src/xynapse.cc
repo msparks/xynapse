@@ -109,7 +109,8 @@ main(int argc, char **argv)
   signal(SIGHUP, signalHandler);
   signal(SIGINT, signalHandler);
 
-  Fwk::Log::Ptr log = Fwk::StdLog::logNew();
+  Fwk::Log::Ptr log = Fwk::Log::logNew();
+  log->levelIs(log->info());
 
   po::variables_map options = parseOptions(argc, argv);
   string configFileName;
