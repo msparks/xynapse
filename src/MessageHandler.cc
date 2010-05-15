@@ -63,11 +63,19 @@ MessageHandler::workerThreadFunc(unsigned int workerIndex)
     if (protocol.size() == 0 || eventName.size() == 0)
       return;
 
+    /* TODO: handlers are processed serially in this thread. There should be
+       a separate queue of <Handler, Message> tuples that multiple threads
+       can process concurrently. */
+
     /* find handler(s) for this event */
     std::vector<Handler>::iterator it;
     for (it = handlers_.begin(); it != handlers_.end(); ++it) {
-      if (it->protocol == protocol && it->eventName == eventName)
-        call(it->handlerFunc, m.msg);
+      if (it->protocol == protocol && it->eventName == eventName) {
+        string response = call(it->handlerFunc, m.msg);
+
+        if (response.size() > 0)
+          m.client->messageNew(response.c_str(), response.size());
+      }
     }
   }
 }
