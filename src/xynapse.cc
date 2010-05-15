@@ -13,8 +13,9 @@
 #include "fwk/Log.h"
 #include "fwk/Ptr.h"
 #include "interfaces/TcpInterface.h"
-#include "PythonInterpreter.h"
+#include "Json.h"
 #include "MessageHandler.h"
+#include "PythonInterpreter.h"
 
 
 using namespace std;
@@ -96,12 +97,26 @@ parseConfigFile(const string& fileName, boost::property_tree::ptree& pt)
 }
 
 
-void signalHandler(int signo)
+void
+signalHandler(int signo)
 {
   if (signo == SIGTERM || signo == SIGHUP || signo == SIGINT) {
     cout << "caught signal, exiting." << endl;
     exit(0);
   }
+}
+
+
+static void
+registerMessageHandler(PythonInterpreter::Ptr& py, MessageHandler::Ptr& mh)
+{
+  /* this tells the Python module how to talk to the MessageHandler */
+  PythonObject::Ptr registerFunc;
+  registerFunc = py->module("xynapse")->attribute("_register");
+
+  PythonTuple::Ptr args = PythonTuple::pythonTupleNew(1);
+  args->itemIs(0, PythonInt::pythonIntNew((long)mh.ptr()));
+  (*registerFunc)(args);
 }
 
 
@@ -125,9 +140,15 @@ main(int argc, char **argv)
 
   try {
     py = PythonInterpreter::pythonInterpreterNew(argv[0]);
-    mh = MessageHandler::messageHandlerNew(py);
-  } catch (Fwk::ResourceException& e) {
-    log->entryNew(e);
+    py->moduleIs("xynapse");
+
+    Json::Ptr json = Json::jsonNew(py);
+    mh = MessageHandler::messageHandlerNew(json);
+
+    registerMessageHandler(py, mh);
+  } catch (Fwk::Exception& e) {
+    log->entryNew(log->critical(), e);
+    exit(1);
   }
 
   log->entryNew("reading from config file: " + configFileName);

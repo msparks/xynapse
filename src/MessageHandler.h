@@ -63,8 +63,8 @@ public:
     python_
   };
 
-  static Ptr messageHandlerNew(PythonInterpreter::Ptr py) {
-    return new MessageHandler(py);
+  static Ptr messageHandlerNew(Json::Ptr json) {
+    return new MessageHandler(json);
   }
 
   void handlerNew(const string& protocol, const string& eventName,
@@ -73,14 +73,13 @@ public:
   void messageNew(CommClient::Ptr client, const string& msg);
 
 protected:
-  MessageHandler(PythonInterpreter::Ptr py);
+  MessageHandler(Json::Ptr json);
   ~MessageHandler();
 
   void workerThreadFunc(unsigned int workerIndex);
 
   string call(PythonObject::Ptr handlerFunc, const string& msg);
 
-  PythonInterpreter::Ptr py_;
   std::vector<Handler> handlers_;
   Fwk::ConcurrentDeque<WorkUnit>::Ptr workQueue_;
   boost::thread_group workers_;

@@ -16,7 +16,7 @@ MessageHandler::handlerNew(const string& protocol, const string& eventName,
   handlers_.push_back(h);
 
   std::stringstream ss;
-  ss << "handler registered: " << "(" << protocol << ", " << eventName + ")";
+  ss << "handler registered: " << "(" << protocol << ", " << eventName << ")";
   log_->entryNew(log_->debug(), ss.str());
 }
 
@@ -84,23 +84,11 @@ MessageHandler::workerThreadFunc(unsigned int workerIndex)
 }
 
 
-MessageHandler::MessageHandler(PythonInterpreter::Ptr py)
-  : py_(py),
-    workQueue_(Fwk::ConcurrentDeque<WorkUnit>::concurrentDequeNew()),
-    json_(Json::jsonNew(py))
+MessageHandler::MessageHandler(Json::Ptr json)
+  : workQueue_(Fwk::ConcurrentDeque<WorkUnit>::concurrentDequeNew()),
+    json_(json)
 {
   log_ = Fwk::Log::logNew("MessageHandler");
-
-  py->moduleIs("json");
-  py->moduleIs("xynapse");
-
-  /* register MessageHandler object in binding module */
-  PythonObject::Ptr registerFunc;
-  registerFunc = py->module("xynapse")->attribute("_register");
-
-  PythonTuple::Ptr args = PythonTuple::pythonTupleNew(1);
-  args->itemIs(0, PythonInt::pythonIntNew((long)this));
-  (*registerFunc)(args);
 
   /* start worker threads. */
   running_ = true;
