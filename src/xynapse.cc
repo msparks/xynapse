@@ -23,6 +23,7 @@ namespace po = boost::program_options;
 
 static PythonInterpreter::Ptr py;
 static MessageHandler::Ptr mh;
+static Fwk::Log::Ptr log_;
 
 
 class CommReactor : public CommInterface::Notifiee {
@@ -92,7 +93,9 @@ parseConfigFile(const string& fileName, boost::property_tree::ptree& pt)
   try {
     boost::property_tree::ini_parser::read_ini(fileName, pt);
   } catch (boost::property_tree::ini_parser::ini_parser_error& e) {
-    cout << "failed to parse config file: " << e.what() << endl;
+    log_->entryNew(log_->critical(),
+                   string("failed to parse config file: ") + e.what());
+    exit(1);
   }
 }
 
@@ -127,8 +130,8 @@ main(int argc, char **argv)
   signal(SIGHUP, signalHandler);
   signal(SIGINT, signalHandler);
 
-  Fwk::Log::Ptr log = Fwk::Log::logNew();
-  log->levelIs(log->debug());
+  log_ = Fwk::Log::logNew();
+  log_->levelIs(log_->debug());
 
   po::variables_map options = parseOptions(argc, argv);
   string configFileName;
@@ -147,22 +150,21 @@ main(int argc, char **argv)
 
     registerMessageHandler(py, mh);
   } catch (Fwk::Exception& e) {
-    log->entryNew(log->critical(), e);
+    log_->entryNew(log_->critical(), e);
     exit(1);
   }
 
-  log->entryNew("reading from config file: " + configFileName);
-  boost::property_tree::ptree pt;
-  parseConfigFile(configFileName, pt);
+  boost::property_tree::ptree config;
+  parseConfigFile(configFileName, config);
 
   BOOST_FOREACH(boost::property_tree::ptree::value_type &v,
-                pt.get_child("modules")) {
+                config.get_child("modules")) {
     try {
       py->moduleIs(v.second.data());
-      log->entryNew("loaded module " + v.second.data());
+      log_->entryNew("loaded module " + v.second.data());
     } catch (Fwk::Exception& e) {
-      log->entryNew(log->warning(), "failed to load module " + v.second.data());
-      log->entryNew(log->debug(), e);
+      log_->entryNew(log_->warning(), "failed to load module " + v.second.data());
+      log_->entryNew(log_->debug(), e);
     }
   }
 
