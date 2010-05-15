@@ -17,6 +17,28 @@
 using std::string;
 
 
+class Message {
+public:
+  Message(CommClient::Ptr _client, const string& _msg)
+    : client(_client), msg(_msg) { }
+
+  CommClient::Ptr client;
+  const string msg;
+};
+
+
+class Handler {
+public:
+  Handler(const string& _protocol, const string& _eventName,
+          PythonObject::Ptr _handlerFunc)
+    : protocol(_protocol), eventName(_eventName), handlerFunc(_handlerFunc) { }
+
+  string protocol;
+  string eventName;
+  PythonObject::Ptr handlerFunc;
+};
+
+
 class MessageHandler : public Fwk::PtrInterface<MessageHandler> {
 public:
   typedef Fwk::Ptr<MessageHandler> Ptr;
@@ -43,15 +65,9 @@ protected:
 
   string call(PythonObject::Ptr handlerFunc, const string& msg);
 
-  struct _pyHandler {
-    string protocol;
-    string eventName;
-    PythonObject::Ptr handlerFunc;
-  };
-
   PythonInterpreter::Ptr py_;
-  std::vector<struct _pyHandler> pyHandlers_;
-  Fwk::ConcurrentDeque<string>::Ptr messageQueue_;
+  std::vector<Handler> handlers_;
+  Fwk::ConcurrentDeque<Message>::Ptr messageQueue_;
   boost::thread_group workers_;
   bool running_;
   Fwk::Log::Ptr log_;

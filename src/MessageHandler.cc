@@ -12,8 +12,8 @@ void
 MessageHandler::handlerNew(const string& protocol, const string& eventName,
                            PythonObject::Ptr& handlerFunc)
 {
-  struct _pyHandler h = {protocol, eventName, handlerFunc};
-  pyHandlers_.push_back(h);
+  Handler h(protocol, eventName, handlerFunc);
+  handlers_.push_back(h);
 
   std::stringstream ss;
   ss << "handler registered: " << "(" << protocol << ", " << eventName + ")";
@@ -24,7 +24,8 @@ MessageHandler::handlerNew(const string& protocol, const string& eventName,
 void
 MessageHandler::messageNew(CommClient::Ptr client, const string& msg)
 {
-  messageQueue_->pushBack(msg);
+  Message m(client, msg);
+  messageQueue_->pushBack(m);
 }
 
 
@@ -46,9 +47,9 @@ void
 MessageHandler::workerThreadFunc(unsigned int workerIndex)
 {
   while (running_) {
-    string msg = messageQueue_->popFront();
+    Message m = messageQueue_->popFront();
     std::stringstream ss(std::stringstream::in | std::stringstream::out);
-    ss << msg;
+    ss << m.msg;
     boost::property_tree::ptree pt;
     try {
       boost::property_tree::json_parser::read_json(ss, pt);
@@ -63,10 +64,10 @@ MessageHandler::workerThreadFunc(unsigned int workerIndex)
       return;
 
     /* find handler(s) for this event */
-    std::vector<struct _pyHandler>::iterator it;
-    for (it = pyHandlers_.begin(); it != pyHandlers_.end(); ++it) {
+    std::vector<Handler>::iterator it;
+    for (it = handlers_.begin(); it != handlers_.end(); ++it) {
       if (it->protocol == protocol && it->eventName == eventName)
-        call(it->handlerFunc, msg);
+        call(it->handlerFunc, m.msg);
     }
   }
 }
@@ -74,7 +75,7 @@ MessageHandler::workerThreadFunc(unsigned int workerIndex)
 
 MessageHandler::MessageHandler(PythonInterpreter::Ptr py)
   : py_(py),
-    messageQueue_(Fwk::ConcurrentDeque<string>::concurrentDequeNew()),
+    messageQueue_(Fwk::ConcurrentDeque<Message>::concurrentDequeNew()),
     json_(Json::jsonNew(py))
 {
   log_ = Fwk::Log::logNew("MessageHandler");
