@@ -33,7 +33,7 @@ public:
     return new CommReactor(notifier);
   }
 
-  void onMessage(CommClient::Ptr client, const char *msg, size_t len) {
+  void onMessage(CommClient::Ptr client, const string& msg) {
     mh->messageNew(client, msg);
   }
 

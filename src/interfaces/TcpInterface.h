@@ -29,22 +29,15 @@ public:
     return new TcpClient(fd, addr);
   }
 
-  virtual ssize_t message(char *buf, size_t bufsize) {
-    ssize_t bytes = recv(socket_, buf, bufsize, 0);
-    if (bytes >= 0)
-      buf[bytes] = 0;
-    return bytes;
-  }
-
-  virtual ssize_t messageNew(const char *buf, size_t len) {
-    return send(socket_, buf, len, 0);
-  }
+  virtual string message();
+  virtual void messageNew(const string& msg);
 
 protected:
   TcpClient(int fd, struct sockaddr_in addr)
     : socket_(fd), addr_(addr) { }
   ~TcpClient() { close(socket_); }
 
+  char buf_[8192];
   int socket_;
   struct sockaddr_in addr_;
 };

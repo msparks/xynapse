@@ -76,7 +76,7 @@ MessageHandler::workerThreadFunc(unsigned int workerIndex)
       string response = call(wu.handler.handlerFunc, wu.message.msg);
 
       if (response.size() > 0)
-        wu.message.client->messageNew(response.c_str(), response.size());
+        wu.message.client->messageNew(response);
     } catch (PythonException& e) {
       log_->entryNew(e);
     }

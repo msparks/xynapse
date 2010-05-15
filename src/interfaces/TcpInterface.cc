@@ -7,6 +7,27 @@ static const unsigned int kReuseAddr   = 1;
 static const unsigned int kMaxClients  = 32;
 
 
+string
+TcpClient::message()
+{
+  ssize_t bytes = recv(socket_, buf_, sizeof(buf_), 0);
+  if (bytes >= 0) {
+    buf_[bytes] = 0;
+    return buf_;
+  } else {
+    return "";
+  }
+}
+
+
+void
+TcpClient::messageNew(const string& msg)
+{
+  /* TODO: check return value; exception? */
+  send(socket_, msg.c_str(), msg.size(), 0);
+}
+
+
 void
 TcpInterface::isolationIs(Isolation iso)
 {
@@ -69,17 +90,15 @@ TcpInterface::acceptThreadFunc()
 void
 TcpInterface::receiveThreadFunc(CommClient::Ptr client)
 {
-  char buf[kRecvBufSize + 1];
-  buf[kRecvBufSize] = 0;
-  int bytes;
+  string msg;
 
   while (running_) {
-    bytes = client->message(buf, kRecvBufSize);
-    if (bytes <= 0)
+    msg = client->message();
+    if (msg.size() == 0)
       break;
 
     if (notifiee_ != NULL)
-      notifiee_->onMessage(client, buf, bytes);
+      notifiee_->onMessage(client, msg);
   }
 
   boost::lock_guard<boost::mutex> lock(clientCountMutex_);

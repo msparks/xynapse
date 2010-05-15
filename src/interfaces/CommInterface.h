@@ -1,10 +1,13 @@
 #ifndef __INTERFACES__COMMINTERFACE_H__
 #define __INTERFACES__COMMINTERFACE_H__
 
+#include <string>
 #include "fwk/Nominal.h"
 #include "fwk/Notifiee.h"
 #include "fwk/Ptr.h"
 #include "fwk/PtrInterface.h"
+
+using std::string;
 
 
 class CommClient : public Fwk::PtrInterface<CommClient> {
@@ -12,8 +15,8 @@ public:
   typedef Fwk::Ptr<CommClient const> PtrConst;
   typedef Fwk::Ptr<CommClient> Ptr;
 
-  virtual ssize_t message(char *buf, size_t bufsize) = 0;
-  virtual ssize_t messageNew(const char *buf, size_t len) = 0;
+  virtual string message() = 0;
+  virtual void messageNew(const string& msg) = 0;
 
 protected:
   virtual ~CommClient() { }
@@ -45,8 +48,7 @@ public:
     CommInterface::Ptr notifier() const { return notifier_; }
 
     virtual void onIsolation() { }
-    virtual void onMessage(CommClient::Ptr client,
-                           const char *msg, const size_t len) { }
+    virtual void onMessage(CommClient::Ptr client, const string& msg) { }
 
   protected:
     CommInterface::Ptr notifier_;
