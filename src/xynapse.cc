@@ -17,6 +17,12 @@
 #include "MessageHandler.h"
 #include "PythonInterpreter.h"
 
+#define LOG(msg) { \
+  std::stringstream ss; \
+  ss << msg; \
+  log_->entryNew(log_->debug(), ss.str()); \
+}
+
 using namespace std;
 namespace po = boost::program_options;
 
