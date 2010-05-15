@@ -24,22 +24,23 @@ static PythonInterpreter::Ptr py;
 static MessageHandler::Ptr mh;
 
 
-class TcpReactor : public TcpInterface::Notifiee {
+class CommReactor : public CommInterface::Notifiee {
 public:
-  typedef Fwk::Ptr<TcpReactor> Ptr;
-  typedef Fwk::Ptr<TcpReactor const> PtrConst;
+  typedef Fwk::Ptr<CommReactor> Ptr;
+  typedef Fwk::Ptr<CommReactor const> PtrConst;
 
-  static Ptr tcpReactorNew(TcpInterface::Ptr notifier) {
-    return new TcpReactor(notifier);
+  static Ptr commReactorNew(CommInterface::Ptr notifier) {
+    return new CommReactor(notifier);
   }
 
-  void onMessage(TcpClient::Ptr client, const char *msg, size_t len) {
+  void onMessage(CommClient::Ptr client, const char *msg, size_t len) {
     mh->messageIs(msg);
   }
 
 protected:
-  TcpReactor(TcpInterface::Ptr notifier)
-    : TcpInterface::Notifiee(notifier), log_(Fwk::Log::logNew("TcpReactor")) { }
+  CommReactor(CommInterface::Ptr notifier)
+    : CommInterface::Notifiee(notifier),
+      log_(Fwk::Log::logNew("CommReactor")) { }
   Fwk::Log::Ptr log_;
 };
 
@@ -144,12 +145,12 @@ main(int argc, char **argv)
     }
   }
 
-  TcpInterface::Ptr tcp = TcpInterface::tcpInterfaceNew();
+  CommInterface::Ptr comm = TcpInterface::tcpInterfaceNew();
 
   /* register reactor */
-  TcpReactor::Ptr reactor = TcpReactor::tcpReactorNew(tcp);
+  CommReactor::Ptr reactor = CommReactor::commReactorNew(comm);
 
-  tcp->isolationIs(TcpInterface::open_);
+  comm->isolationIs(CommInterface::open_);
 
   while (true)
     sleep(60);

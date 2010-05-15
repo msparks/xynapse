@@ -11,6 +11,7 @@
 #include "fwk/Notifiee.h"
 #include "fwk/Ptr.h"
 #include "fwk/PtrInterface.h"
+#include "interfaces/CommInterface.h"
 
 
 static const unsigned short kDefaultTcpPort = 9889;
@@ -22,87 +23,58 @@ public:
 };
 
 
-class TcpClient : public Fwk::PtrInterface<TcpClient> {
+class TcpClient : public CommClient {
 public:
-  typedef Fwk::Ptr<TcpClient const> PtrConst;
-  typedef Fwk::Ptr<TcpClient> Ptr;
-
-  static TcpClient::Ptr tcpClientNew(int fd, struct sockaddr_in addr) {
-    TcpClient *tc = new TcpClient(fd, addr);
-    return tc;
+  static Ptr tcpClientNew(int fd, struct sockaddr_in addr) {
+    return new TcpClient(fd, addr);
   }
 
-  int socket() const { return socket_; }
-  struct sockaddr_in address() const { return addr_; }
+  virtual ssize_t message(char *buf, size_t bufsize) {
+    ssize_t bytes = recv(socket_, buf, bufsize, 0);
+    if (bytes >= 0)
+      buf[bytes] = 0;
+    return bytes;
+  }
+
+  virtual ssize_t messageIs(const char *buf, size_t len) {
+    return send(socket_, buf, len, 0);
+  }
 
 protected:
   TcpClient(int fd, struct sockaddr_in addr)
     : socket_(fd), addr_(addr) { }
+  ~TcpClient() { close(socket_); }
 
   int socket_;
   struct sockaddr_in addr_;
 };
 
 
-class TcpInterface : public Fwk::PtrInterface<TcpInterface> {
+class TcpInterface : public CommInterface {
 public:
   typedef Fwk::Ptr<TcpInterface> Ptr;
   typedef Fwk::Ptr<TcpInterface const> PtrConst;
 
-  enum Isolation {
-    open_,
-    closed_
-  };
-
-  static TcpInterface::Ptr tcpInterfaceNew() {
-    TcpInterface *ti = new TcpInterface();
-    return ti;
+  static Ptr tcpInterfaceNew(Port port=kDefaultTcpPort) {
+    return new TcpInterface(port);
   }
 
-  void portIs(Port port);
   Port port() const { return port_; }
 
   void isolationIs(Isolation iso);
-  Isolation isolation() const { return isolation_; }
-
-  class Notifiee : public Fwk::PtrInterface<Notifiee> {
-  public:
-    virtual void notifierIs(TcpInterface::Ptr notifier) {
-      if (notifier_ != notifier) {
-        notifier_ = notifier;
-        notifier->notifieeIs(this);
-      }
-    }
-
-    TcpInterface::Ptr notifier() const { return notifier_; }
-
-    virtual void onPort() { }
-    virtual void onIsolation() { }
-    virtual void onMessage(TcpClient::Ptr client,
-                           const char *msg, size_t len) { }
-
-  protected:
-    TcpInterface::Ptr notifier_;
-    Notifiee(TcpInterface::Ptr notifier) : notifier_(notifier) {
-      notifier_->notifieeIs(this);
-    }
-  };
 
 protected:
-  void notifieeIs(Notifiee *notifiee) { notifiee_ = notifiee; }
-
   void acceptThreadFunc();
-  void receiveThreadFunc(TcpClient::Ptr client);
+  void receiveThreadFunc(CommClient::Ptr client);
   void start();
   void stop();
 
-  TcpInterface()
-    : notifiee_(NULL), port_(kDefaultTcpPort), isolation_(closed_),
+  TcpInterface(Port port)
+    : port_(port), isolation_(closed_),
       running_(false), sock_(0), clientCount_(0),
       log_(Fwk::Log::logNew("TcpInterface")) { }
   ~TcpInterface() { stop(); }
 
-  Notifiee *notifiee_;
   Port port_;
   Isolation isolation_;
   bool running_;

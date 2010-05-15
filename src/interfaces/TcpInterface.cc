@@ -1,27 +1,10 @@
 #include "interfaces/TcpInterface.h"
 
-#include <iostream>
-
-using std::cout;
-using std::endl;
 
 static const unsigned int kBacklog     = 32;
 static const unsigned int kRecvBufSize = 65536;
 static const unsigned int kReuseAddr   = 1;
 static const unsigned int kMaxClients  = 32;
-
-
-void
-TcpInterface::portIs(Port port)
-{
-  if (port_ == port)
-    return;
-
-  port_ = port;
-
-  if (notifiee_ != NULL)
-    notifiee_->onPort();
-}
 
 
 void
@@ -62,17 +45,21 @@ TcpInterface::acceptThreadFunc()
 
     boost::lock_guard<boost::mutex> lock(clientCountMutex_);
     if (clientCount_ >= kMaxClients) {
+      log_->entryNew(log_->warning(),
+                     "discarded new client; already at max clients");
       close(client);
       continue;
+    } else {
+      clientCount_++;
+      log_->entryNew(log_->info(), "accepted new client");
     }
 
-    clientCount_++;
-    TcpClient::Ptr tc = TcpClient::tcpClientNew(client, addr);
+    CommClient::Ptr tc = TcpClient::tcpClientNew(client, addr);
 
     /* start receive thread for this client */
-    boost::thread *thr = new boost::thread(&TcpInterface::receiveThreadFunc,
-                                           this, tc);
-    threadGroup_.add_thread(thr);
+    boost::thread thr = boost::thread(&TcpInterface::receiveThreadFunc,
+                                      this, tc);
+    thr.detach();
   }
 
   log_->entryNew(log_->info(), "shutting down");
@@ -80,23 +67,20 @@ TcpInterface::acceptThreadFunc()
 
 
 void
-TcpInterface::receiveThreadFunc(TcpClient::Ptr client)
+TcpInterface::receiveThreadFunc(CommClient::Ptr client)
 {
   char buf[kRecvBufSize + 1];
   buf[kRecvBufSize] = 0;
   int bytes;
 
   while (running_) {
-    bytes = recv(client->socket(), buf, kRecvBufSize, 0);
+    bytes = client->message(buf, kRecvBufSize);
     if (bytes <= 0)
       break;
-    buf[bytes] = 0;
 
     if (notifiee_ != NULL)
       notifiee_->onMessage(client, buf, bytes);
   }
-
-  close(client->socket());
 
   boost::lock_guard<boost::mutex> lock(clientCountMutex_);
   clientCount_--;

@@ -5,11 +5,12 @@
 
 #include <string>
 #include <vector>
+#include <boost/thread.hpp>
 #include "fwk/Log.h"
 #include "fwk/Ptr.h"
 #include "fwk/PtrInterface.h"
 #include "fwk/ConcurrentDeque.h"
-#include "interfaces/TcpInterface.h"
+#include "interfaces/CommInterface.h"
 #include "Json.h"
 
 
