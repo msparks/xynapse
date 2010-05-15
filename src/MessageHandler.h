@@ -30,10 +30,10 @@ public:
     return new MessageHandler(py);
   }
 
-  void handlerIs(const string& protocol, const string& eventName,
-                 PythonObject::Ptr& handlerFunc);
+  void handlerNew(const string& protocol, const string& eventName,
+                  PythonObject::Ptr& handlerFunc);
 
-  void messageIs(const string& msg);
+  void messageNew(CommClient::Ptr client, const string& msg);
 
 protected:
   MessageHandler(PythonInterpreter::Ptr py);

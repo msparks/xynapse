@@ -36,7 +36,7 @@ public:
     return bytes;
   }
 
-  virtual ssize_t messageIs(const char *buf, size_t len) {
+  virtual ssize_t messageNew(const char *buf, size_t len) {
     return send(socket_, buf, len, 0);
   }
 

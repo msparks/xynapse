@@ -9,8 +9,8 @@ static const unsigned int kWorkers = 5;
 
 
 void
-MessageHandler::handlerIs(const string& protocol, const string& eventName,
-                          PythonObject::Ptr& handlerFunc)
+MessageHandler::handlerNew(const string& protocol, const string& eventName,
+                           PythonObject::Ptr& handlerFunc)
 {
   struct _pyHandler h = {protocol, eventName, handlerFunc};
   pyHandlers_.push_back(h);
@@ -22,7 +22,7 @@ MessageHandler::handlerIs(const string& protocol, const string& eventName,
 
 
 void
-MessageHandler::messageIs(const string& msg)
+MessageHandler::messageNew(CommClient::Ptr client, const string& msg)
 {
   messageQueue_->pushBack(msg);
 }

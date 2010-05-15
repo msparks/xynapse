@@ -34,7 +34,7 @@ public:
   }
 
   void onMessage(CommClient::Ptr client, const char *msg, size_t len) {
-    mh->messageIs(msg);
+    mh->messageNew(client, msg);
   }
 
 protected:

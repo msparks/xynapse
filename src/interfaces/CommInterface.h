@@ -13,7 +13,7 @@ public:
   typedef Fwk::Ptr<CommClient> Ptr;
 
   virtual ssize_t message(char *buf, size_t bufsize) = 0;
-  virtual ssize_t messageIs(const char *buf, size_t len) = 0;
+  virtual ssize_t messageNew(const char *buf, size_t len) = 0;
 
 protected:
   virtual ~CommClient() { }

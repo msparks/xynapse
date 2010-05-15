@@ -24,7 +24,7 @@ xynapse_bind(PyObject *self, PyObject *args)
     return NULL;
 
   PythonObject::Ptr obj = PythonObject::pythonObjectNew(callable);
-  mh->handlerIs(protocol, eventName, obj);
+  mh->handlerNew(protocol, eventName, obj);
 
   Py_RETURN_NONE;
 }
