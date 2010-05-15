@@ -82,13 +82,9 @@ PythonInterpreter::PythonInterpreter(const string& progName)
   Py_InitializeEx(1);
   PyEval_InitThreads();
 
-  std::string path = Py_GetPath();
-  if (strcmp(Py_GetPlatform(), "win") == 0)
-    path = ".;" + path;
-  else
-    path = ".:" + path;
-
-  PySys_SetPath((char *)path.c_str());
+  PythonModule::Ptr sys = PythonModule::pythonModuleNew("sys");
+  PythonString::Ptr dot = PythonString::pythonStringNew(".");
+  PyList_Insert((*sys)["path"]->ptr(), 0, dot->ptr());
 
   PyGILState_Release(PyGILState_UNLOCKED);
 }
