@@ -145,7 +145,7 @@ public:
   }
 
   static Ptr pythonStringNew(PythonObject::Ptr o) {
-    if (o->ptr() == NULL | !PyString_Check(o->ptr()))
+    if (o->ptr() == NULL || !PyString_Check(o->ptr()))
       return pythonStringNew("");
     return new PythonString(o->ptr());
   }
