@@ -71,10 +71,14 @@ MessageHandler::workerThreadFunc(unsigned int workerIndex)
     std::vector<Handler>::iterator it;
     for (it = handlers_.begin(); it != handlers_.end(); ++it) {
       if (it->protocol == protocol && it->eventName == eventName) {
-        string response = call(it->handlerFunc, m.msg);
+        try {
+          string response = call(it->handlerFunc, m.msg);
 
-        if (response.size() > 0)
-          m.client->messageNew(response.c_str(), response.size());
+          if (response.size() > 0)
+            m.client->messageNew(response.c_str(), response.size());
+        } catch (PythonException& e) {
+          log_->entryNew(e);
+        }
       }
     }
   }
