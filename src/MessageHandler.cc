@@ -24,8 +24,31 @@ MessageHandler::handlerNew(const string& protocol, const string& eventName,
 void
 MessageHandler::messageNew(CommClient::Ptr client, const string& msg)
 {
-  Message m(client, msg);
-  messageQueue_->pushBack(m);
+  std::stringstream ss;
+  ss << msg;
+  boost::property_tree::ptree pt;
+  try {
+    boost::property_tree::json_parser::read_json(ss, pt);
+  } catch (boost::property_tree::json_parser::json_parser_error& e) {
+    log_->entryNew(log_->debug(),
+                   "unable to parse incoming message: '" + msg + "'");
+    return;
+  }
+
+  string protocol = pt.get("protocol", "");
+  string eventName = pt.get("eventName", "");
+  if (protocol.size() == 0 || eventName.size() == 0)
+    return;
+
+  /* find handler(s) for this event */
+  std::vector<Handler>::iterator it;
+  for (it = handlers_.begin(); it != handlers_.end(); ++it) {
+    if (it->protocol == protocol && it->eventName == eventName) {
+      Message m(client, msg);
+      WorkUnit wu(*it, m);
+      workQueue_->pushBack(wu);
+    }
+  }
 }
 
 
@@ -47,39 +70,15 @@ void
 MessageHandler::workerThreadFunc(unsigned int workerIndex)
 {
   while (running_) {
-    Message m = messageQueue_->popFront();
-    std::stringstream ss(std::stringstream::in | std::stringstream::out);
-    ss << m.msg;
-    boost::property_tree::ptree pt;
+    WorkUnit wu = workQueue_->popFront();
+
     try {
-      boost::property_tree::json_parser::read_json(ss, pt);
-    } catch (boost::property_tree::json_parser::json_parser_error& e) {
-      log_->entryNew(log_->debug(), "unable to parse incoming message");
-      return;
-    }
+      string response = call(wu.handler.handlerFunc, wu.message.msg);
 
-    string protocol = pt.get("protocol", "");
-    string eventName = pt.get("eventName", "");
-    if (protocol.size() == 0 || eventName.size() == 0)
-      return;
-
-    /* TODO: handlers are processed serially in this thread. There should be
-       a separate queue of <Handler, Message> tuples that multiple threads
-       can process concurrently. */
-
-    /* find handler(s) for this event */
-    std::vector<Handler>::iterator it;
-    for (it = handlers_.begin(); it != handlers_.end(); ++it) {
-      if (it->protocol == protocol && it->eventName == eventName) {
-        try {
-          string response = call(it->handlerFunc, m.msg);
-
-          if (response.size() > 0)
-            m.client->messageNew(response.c_str(), response.size());
-        } catch (PythonException& e) {
-          log_->entryNew(e);
-        }
-      }
+      if (response.size() > 0)
+        wu.message.client->messageNew(response.c_str(), response.size());
+    } catch (PythonException& e) {
+      log_->entryNew(e);
     }
   }
 }
@@ -87,7 +86,7 @@ MessageHandler::workerThreadFunc(unsigned int workerIndex)
 
 MessageHandler::MessageHandler(PythonInterpreter::Ptr py)
   : py_(py),
-    messageQueue_(Fwk::ConcurrentDeque<Message>::concurrentDequeNew()),
+    workQueue_(Fwk::ConcurrentDeque<WorkUnit>::concurrentDequeNew()),
     json_(Json::jsonNew(py))
 {
   log_ = Fwk::Log::logNew("MessageHandler");

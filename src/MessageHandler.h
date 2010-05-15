@@ -21,6 +21,8 @@ class Message {
 public:
   Message(CommClient::Ptr _client, const string& _msg)
     : client(_client), msg(_msg) { }
+  Message(const Message& other)
+    : client(other.client), msg(other.msg) { }
 
   CommClient::Ptr client;
   const string msg;
@@ -32,10 +34,23 @@ public:
   Handler(const string& _protocol, const string& _eventName,
           PythonObject::Ptr _handlerFunc)
     : protocol(_protocol), eventName(_eventName), handlerFunc(_handlerFunc) { }
+  Handler(const Handler& other)
+    : protocol(other.protocol), eventName(other.eventName),
+      handlerFunc(other.handlerFunc) { }
 
   string protocol;
   string eventName;
   PythonObject::Ptr handlerFunc;
+};
+
+
+class WorkUnit {
+public:
+  WorkUnit(const Handler& h, const Message& m)
+    : handler(h), message(m) { }
+
+  Handler handler;
+  Message message;
 };
 
 
@@ -67,7 +82,7 @@ protected:
 
   PythonInterpreter::Ptr py_;
   std::vector<Handler> handlers_;
-  Fwk::ConcurrentDeque<Message>::Ptr messageQueue_;
+  Fwk::ConcurrentDeque<WorkUnit>::Ptr workQueue_;
   boost::thread_group workers_;
   bool running_;
   Fwk::Log::Ptr log_;
