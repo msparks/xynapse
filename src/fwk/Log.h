@@ -75,8 +75,9 @@ public:
     if (level < rootLog->level())
       return;
 
-    std::cout << timestamp()
-              << " [" << levelName(level) << "] " << name() << ": ";
+    std::cout << timestamp() << " [" << levelName(level) << "] ";
+    if (name() != "root")
+      std::cout << name() << ": ";
     if (entity != NULL && funcName.size() > 0)
       std::cout << entity->name() << "::" << funcName << ": ";
     else if (funcName.size() > 0)
