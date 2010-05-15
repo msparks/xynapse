@@ -33,6 +33,10 @@ all: $(PYTHON_BINDING)
 
 clean-local: xynapse-python-clean
 
+install-exec-local: xynapse-python-install
+
+uninstall-local: xynapse-python-uninstall
+
 xynapse-python: src/bindings/python/xynapse.cc
 	cd src/bindings/python && $(PYTHON) setup.py build
 	- cp src/bindings/python/build/*/xynapse.so .
@@ -41,13 +45,17 @@ xynapse-python-clean:
 	cd src/bindings/python && $(PYTHON) setup.py clean --all
 	rm -rf src/bindings/python/build
 
+xynapse-python-install:
+	cd src/bindings/python && $(PYTHON) setup.py install
+
 # This rule cleans up stuff installed by Python's setup.py. Unfortunately,
 # Python's distutils do not provide an uninstall command, so we have to make
 # up for it here in uninstall-local hook. This might break if distutils'
 # behaviour changes as automake has no control over what distutils install
 # command does.
-uninstall-local:
+xynapse-python-uninstall:
 	rm -rf $(DESTDIR)$(libdir)/python*/site-packages/xynapse*
+	rm -rf $(DESTDIR)$(libdir)/python*/dist-packages/xynapse*
 
 
 deep-clean: distclean
