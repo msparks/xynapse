@@ -14,7 +14,6 @@
 #include "interfaces/CommInterface.h"
 
 
-static const unsigned short kDefaultTcpPort = 9889;
 static const unsigned int kRecvBufSize = 65536;
 
 
@@ -50,9 +49,7 @@ public:
   typedef Fwk::Ptr<TcpInterface> Ptr;
   typedef Fwk::Ptr<TcpInterface const> PtrConst;
 
-  static Ptr tcpInterfaceNew(Port port=kDefaultTcpPort) {
-    return new TcpInterface(port);
-  }
+  static Ptr tcpInterfaceNew(Port port) { return new TcpInterface(port); }
 
   Port port() const { return port_; }
 

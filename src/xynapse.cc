@@ -17,9 +17,10 @@
 #include "MessageHandler.h"
 #include "PythonInterpreter.h"
 
-
 using namespace std;
 namespace po = boost::program_options;
+
+static const unsigned short kDefaultTcpPort = 9889;
 
 static PythonInterpreter::Ptr py;
 static MessageHandler::Ptr mh;
@@ -168,12 +169,16 @@ main(int argc, char **argv)
     }
   }
 
-  CommInterface::Ptr comm = TcpInterface::tcpInterfaceNew();
-
-  /* register reactor */
+  Port port = config.get("interfaces::tcp.port", kDefaultTcpPort);
+  CommInterface::Ptr comm = TcpInterface::tcpInterfaceNew(port);
   CommReactor::Ptr reactor = CommReactor::commReactorNew(comm);
 
-  comm->isolationIs(CommInterface::open_);
+  try {
+    comm->isolationIs(CommInterface::open_);
+  } catch (Fwk::Exception& e) {
+    log_->entryNew(log_->critical(), e);
+    exit(1);
+  }
 
   while (true)
     sleep(60);
