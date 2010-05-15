@@ -2,7 +2,6 @@
 
 
 static const unsigned int kBacklog     = 32;
-static const unsigned int kRecvBufSize = 65536;
 static const unsigned int kReuseAddr   = 1;
 static const unsigned int kMaxClients  = 32;
 
@@ -10,10 +9,22 @@ static const unsigned int kMaxClients  = 32;
 string
 TcpClient::message()
 {
-  ssize_t bytes = recv(socket_, buf_, sizeof(buf_), 0);
-  if (bytes >= 0) {
+  ssize_t bytes;
+  bytes = (extraSize_ > 0) ? extraSize_ : recv(socket_, buf_, kRecvBufSize, 0);
+
+  if (bytes > 0) {
     buf_[bytes] = 0;
-    return buf_;
+    string msg(buf_);
+    size_t msgSize = msg.size();
+
+    /* messages are null-terminated. If we received more than one byte beyond
+       the size of msg, we probably received more than one message. If so,
+       copy the extra to the beginning of buf_ for consuming next time. */
+    extraSize_ = bytes - (msgSize + 1);
+    if (extraSize_ > 0)
+      memcpy(buf_, buf_ + msgSize + 1, extraSize_);
+
+    return msg;
   } else {
     return "";
   }

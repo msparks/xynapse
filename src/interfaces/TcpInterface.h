@@ -15,6 +15,7 @@
 
 
 static const unsigned short kDefaultTcpPort = 9889;
+static const unsigned int kRecvBufSize = 65536;
 
 
 class Port : public Fwk::Ordinal<Port, unsigned short> {
@@ -34,10 +35,11 @@ public:
 
 protected:
   TcpClient(int fd, struct sockaddr_in addr)
-    : socket_(fd), addr_(addr) { }
+    : extraSize_(0), socket_(fd), addr_(addr) { }
   ~TcpClient() { close(socket_); }
 
-  char buf_[8192];
+  char buf_[kRecvBufSize + 1];
+  ssize_t extraSize_;
   int socket_;
   struct sockaddr_in addr_;
 };
