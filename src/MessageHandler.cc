@@ -62,7 +62,7 @@ MessageHandler::call(PythonObject::Ptr handlerFunc, const string& msg)
   args->itemIs(0, obj);
 
   PythonObject::Ptr ret = (*handlerFunc)(args);
-  return json_->dumps(ret);
+  return (!ret->isNone()) ? json_->dumps(ret) : "";
 }
 
 

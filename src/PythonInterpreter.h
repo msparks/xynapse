@@ -62,6 +62,8 @@ public:
     return PyCallable_Check(object_);
   }
 
+  bool isNone() const { return object_ == Py_None; }
+
   Ptr operator()(Fwk::Ptr<PythonTuple>& args);
   Ptr operator()();
 
