@@ -35,7 +35,10 @@ void
 TcpClient::messageNew(const string& msg)
 {
   /* TODO: check return value; exception? */
-  send(socket_, msg.c_str(), msg.size(), 0);
+  /* TODO: locking? */
+
+  /* \0 is included with message as delimiter */
+  send(socket_, msg.c_str(), msg.size() + 1, 0);
 }
 
 
